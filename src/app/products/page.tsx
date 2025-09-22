@@ -24,7 +24,7 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const limit = 12; // Products per page
+  const limit = 25;
 
   useEffect(() => {
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
@@ -49,7 +49,7 @@ export default function ProductsPage() {
       }
     }
     fetchProducts();
-  }, [searchParams]); // Re-fetch when searchParams (page) changes
+  }, [searchParams]);
 
   const totalPages = Math.ceil(total / limit);
 
