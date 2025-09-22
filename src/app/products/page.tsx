@@ -1,10 +1,12 @@
-'use client';
+/** biome-ignore-all assist/source/organizeImports: <> */
+"use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
+import Link from "next/link";
 interface Product {
   handle: string;
   title: string;
@@ -16,7 +18,7 @@ interface Product {
 const PRODUCT_API_BASE_URL =
   process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:3000";
 
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,7 +36,7 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         const res = await fetch(
-          `${PRODUCT_API_BASE_URL}/api/products?page=${currentPage}&limit=${limit}`
+          `${PRODUCT_API_BASE_URL}/api/products?page=${currentPage}&limit=${limit}`,
         );
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -60,20 +62,20 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 sm:p-12 md:p-24 bg-gray-50 text-gray-800">
-      <h1 className="text-4xl font-bold text-center mb-12">All Products</h1>
+    <div className="bg-gray-50 p-8 sm:p-12 md:p-24 min-h-screen text-gray-800">
+      <h1 className="mb-12 font-bold text-4xl text-center">All Products</h1>
 
       {loading && <p className="text-center">Loading products...</p>}
-      {error && <p className="text-center text-red-500">Error: {error}</p>}
+      {error && <p className="text-red-500 text-center">Error: {error}</p>}
       {!loading && !error && products.length === 0 && (
         <p className="text-center">No products found.</p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+      <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mx-auto max-w-7xl">
         {products.map((product) => (
           <Link href={`/products/${product.handle}`} key={product.handle}>
-            <div className="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-200 hover:scale-105 cursor-pointer">
-              <div className="relative w-full h-48 bg-gray-200 flex items-center justify-center">
+            <div className="bg-white shadow-md rounded-lg overflow-hidden hover:scale-105 transition-transform duration-200 cursor-pointer transform">
+              <div className="relative flex justify-center items-center bg-gray-200 w-full h-48">
                 {product.featured_image_url ? (
                   <Image
                     src={product.featured_image_url}
@@ -86,10 +88,12 @@ export default function ProductsPage() {
                 )}
               </div>
               <div className="p-4">
-                <h3 className="text-lg font-semibold truncate">{product.title}</h3>
-                <p className="text-sm text-gray-600">{product.vendor}</p>
+                <h3 className="font-semibold text-lg truncate">
+                  {product.title}
+                </h3>
+                <p className="text-gray-600 text-sm">{product.vendor}</p>
                 {product.price && (
-                  <p className="text-md font-bold text-gray-800 mt-2">
+                  <p className="mt-2 font-bold text-gray-800 text-md">
                     ${product.price.toFixed(2)}
                   </p>
                 )}
@@ -101,26 +105,40 @@ export default function ProductsPage() {
 
       {/* Pagination Controls */}
       {!loading && !error && totalPages > 1 && (
-        <div className="flex justify-center items-center mt-12 space-x-4">
-          <button
+        <div className="flex justify-center items-center space-x-4 mt-12">
+          <Button
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-md text-white disabled:cursor-not-allowed"
           >
             Previous
-          </button>
-          <span className="text-lg font-semibold">
+          </Button>
+          <span className="font-semibold text-lg">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-500 disabled:opacity-50 px-4 py-2 rounded-md text-white disabled:cursor-not-allowed"
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center bg-gray-50 p-8 sm:p-12 md:p-24 min-h-screen text-gray-800">
+          <p className="text-center">Loading...</p>
+        </div>
+      }
+    >
+      <ProductsContent />
+    </Suspense>
   );
 }
