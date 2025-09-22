@@ -1,12 +1,13 @@
 /** biome-ignore-all assist/source/organizeImports: <> */
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 import Link from "next/link";
+
 interface Product {
   handle: string;
   title: string;
