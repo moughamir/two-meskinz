@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import type { Product, Root } from "@/types/shopify"; // Import Product and Root
+import type { Product, ProductsCollection } from "@/types/shopify";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,18 +9,17 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "5", 10);
 
   try {
-    // Construct the path to your products.json file in the public directory
     const jsonDirectory = path.join(process.cwd(), "public");
     const fileContents = await fs.readFile(
       `${jsonDirectory}/products.json`,
-      "utf8",
+      "utf8"
     );
-    const { products } = JSON.parse(fileContents) as Root; // Type assertion and destructuring
+    const { products } = JSON.parse(fileContents) as ProductsCollection;
 
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
 
-    const paginatedProducts: Product[] = products.slice(startIndex, endIndex); // Explicitly type
+    const paginatedProducts: Product[] = products.slice(startIndex, endIndex);
 
     const totalProducts = products.length;
     const totalPages = Math.ceil(totalProducts / limit);
@@ -38,7 +37,7 @@ export async function GET(request: Request) {
     console.error("Error fetching products:", error);
     return NextResponse.json(
       { error: "Failed to fetch products" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -1,4 +1,4 @@
-export interface Root {
+export interface ProductsCollection {
   products: Product[];
 }
 
@@ -13,17 +13,17 @@ export interface Product {
   vendor: string;
   product_type: string;
   tags: string[];
-  variants: Variant[];
-  images: Image[];
-  options: Option[];
+  variants: ProductVariant[];
+  images: ProductImage[];
+  options: ProductOption[];
 }
 
-export interface Variant {
+export interface ProductVariant {
   id: number;
   title: string;
   option1: string;
-  option2: any;
-  option3: any;
+  option2: string;
+  option3: string;
   sku: string;
   requires_shipping: boolean;
   taxable: boolean;
@@ -38,7 +38,7 @@ export interface Variant {
   updated_at: string;
 }
 
-export interface Image {
+export interface ProductImage {
   id: number;
   created_at: string;
   position: number;
@@ -50,7 +50,7 @@ export interface Image {
   height: number;
 }
 
-export interface Option {
+export interface ProductOption {
   name: string;
   position: number;
   values: string[];

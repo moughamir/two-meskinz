@@ -1,11 +1,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import type { Product, Root } from "@/types/shopify"; // Import Product and Root
+import type { Product, ProductsCollection } from "@/types/shopify"; // Import Product and Root
 
 export async function GET(
   _request: Request,
-  { params }: { params: { handle: string } },
+  { params }: { params: { handle: string } }
 ) {
   const { handle } = params;
 
@@ -13,12 +13,12 @@ export async function GET(
     const jsonDirectory = path.join(process.cwd(), "public");
     const fileContents = await fs.readFile(
       `${jsonDirectory}/products.json`,
-      "utf8",
+      "utf8"
     );
-    const { products } = JSON.parse(fileContents) as Root; // Type assertion and destructuring
+    const { products } = JSON.parse(fileContents) as ProductsCollection; // Type assertion and destructuring
 
     const product: Product | undefined = products.find(
-      (p) => p.handle === handle,
+      (p) => p.handle === handle
     ); // Type product
 
     if (product) {
@@ -30,7 +30,7 @@ export async function GET(
     console.error("Error fetching product:", error);
     return NextResponse.json(
       { error: "Failed to fetch product" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
