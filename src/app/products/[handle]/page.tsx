@@ -1,165 +1,236 @@
-'use client';
+/** biome-ignore-all lint/security/noDangerouslySetInnerHtml: <explanation> */
+"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { moritotabi, type Product } from "@/lib/moritotabi";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-interface Product {
-  id: number;
-  title: string;
-  handle: string;
-  body_html: string;
-  published_at: string;
-  created_at: string;
-  updated_at: string;
-  vendor: string;
-  product_type: string;
-  tags: string[];
-  variants: Array<{
-    id: number;
-    title: string;
-    price: string;
-    compare_at_price?: string;
-  }>;
-  images: Array<{
-    id: number;
-    src: string;
-    alt?: string;
-  }>;
-  options: Array<{
-    id: number;
-    name: string;
-    values: string[];
-  }>;
-  featured_image_url?: string;
-  price?: number;
-  compare_at_price?: number;
-  availability?: string;
-}
-
-const PRODUCT_API_BASE_URL =
-  process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:3000";
+// Define the Option type since it's not exported from moritotabi
+type Option = {
+	id: string | number;
+	name: string;
+	values: string[];
+};
 
 export default function ProductDetailPage() {
-  const params = useParams();
-  const handle = params.handle as string;
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+	const params = useParams();
+	const router = useRouter();
+	const handle = params.handle as string;
+	const [product, setProduct] = useState<Product | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!handle) return;
+	useEffect(() => {
+		async function fetchProduct() {
+			try {
+				setLoading(true);
+				const productData = await moritotabi.getProductByHandle(handle);
+				setProduct(productData);
+			} catch (err) {
+				setError(
+					err instanceof Error ? err.message : "Failed to fetch product",
+				);
+				console.error("Error fetching product:", err);
+			} finally {
+				setLoading(false);
+			}
+		}
 
-    async function fetchProduct() {
-      try {
-        setLoading(true);
-        const res = await fetch(`${PRODUCT_API_BASE_URL}/api/products/${handle}`);
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const data = await res.json();
-        setProduct(data);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProduct();
-  }, [handle]);
+		if (handle) {
+			fetchProduct();
+		}
+	}, [handle]);
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading product details...</div>;
-  }
+	if (loading) {
+		return (
+			<div className="flex justify-center items-center min-h-screen">
+				Loading product...
+			</div>
+		);
+	}
 
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
-  }
+	if (error) {
+		return (
+			<div className="flex justify-center items-center min-h-screen">
+				Error: {error}
+			</div>
+		);
+	}
 
-  if (!product) {
-    return <div className="min-h-screen flex items-center justify-center">Product not found.</div>;
-  }
+	if (!product) {
+		return (
+			<div className="flex justify-center items-center min-h-screen">
+				Product not found
+			</div>
+		);
+	}
 
-  return (
-    <div className="min-h-screen p-8 sm:p-12 md:p-24 bg-gray-50 text-gray-800">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-4xl font-bold mb-4">{product.title}</h1>
-        <p className="text-gray-600 mb-6">By {product.vendor}</p>
+	const mainImage = product.images?.[0]?.src;
+	const hasVariants = product.variants && product.variants.length > 1;
+	const price =
+		product.price ||
+		(product.variants?.[0]?.price ? parseFloat(product.variants[0].price) : 0);
+	const comparePrice =
+		product.compare_at_price ||
+		(product.variants?.[0]?.compare_at_price
+			? parseFloat(product.variants[0].compare_at_price)
+			: undefined);
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* Product Images */}
-          <div className="space-y-4">
-            {product.images && product.images.length > 0 ? (
-              product.images.map((image) => (
-                <div key={image.id} className="relative w-full h-80 bg-gray-200 rounded-md overflow-hidden">
-                  <Image
-                    src={image.src}
-                    alt={image.alt || product.title}
-                    layout="fill"
-                    objectFit="contain" // Use contain for product images
-                  />
-                </div>
-              ))
-            ) : (
-              <div className="relative w-full h-80 bg-gray-200 rounded-md flex items-center justify-center">
-                <span className="text-gray-500">No Images Available</span>
-              </div>
-            )}
-          </div>
+	// Safely get tags or default to empty array
+	const tags = product.tags || [];
+	const description = (product as any).body_html || "No description available";
+	const options = (product as any).options || [];
 
-          {/* Product Info */}
-          <div>
-            {product.price && (
-              <p className="text-3xl font-bold text-blue-600 mb-4">
-                ${product.price.toFixed(2)}
-                {product.compare_at_price && (
-                  <span className="text-lg text-gray-500 line-through ml-2">
-                    ${product.compare_at_price.toFixed(2)}
-                  </span>
-                )}
-              </p>
-            )}
+	return (
+		<div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+			<Button variant="outline" onClick={() => router.back()} className="mb-6">
+				← Back to products
+			</Button>
 
-            <p className="text-gray-700 mb-4" dangerouslySetInnerHTML={{ __html: product.body_html }}></p>
+			<div className="lg:gap-x-8 lg:grid lg:grid-cols-2">
+				{/* Product Images */}
+				<div className="space-y-4">
+					<div className="bg-gray-100 rounded-lg aspect-h-4 aspect-w-3 overflow-hidden">
+						{mainImage ? (
+							<Image
+								src={mainImage}
+								alt={product.title}
+								width={800}
+								height={800}
+								className="w-full h-full object-center object-cover"
+								priority
+							/>
+						) : (
+							<div className="flex justify-center items-center h-full">
+								<span className="text-gray-400">No image available</span>
+							</div>
+						)}
+					</div>
+					{product.images && product.images.length > 1 && (
+						<div className="gap-4 grid grid-cols-4">
+							{product.images.map((image) => (
+								<div
+									key={image.id}
+									className="bg-gray-100 rounded-lg aspect-h-2 aspect-w-3 overflow-hidden"
+								>
+									<Image
+										src={image.src}
+										alt={image.alt || product.title}
+										width={200}
+										height={200}
+										className="w-full h-full object-center object-cover"
+									/>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
 
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-800">Product Type:</h3>
-              <p className="text-gray-700">{product.product_type}</p>
-            </div>
+				{/* Product Info */}
+				<div className="mt-10 sm:mt-16 lg:mt-0 px-4 sm:px-0">
+					<h1 className="font-bold text-gray-900 text-3xl tracking-tight">
+						{product.title}
+					</h1>
 
-            <div className="mb-4">
-              <h3 className="font-semibold text-gray-800">Availability:</h3>
-              <p className="text-gray-700">{product.availability || "N/A"}</p>
-            </div>
+					{product.vendor && (
+						<p className="mt-2 text-gray-500 text-sm">
+							Vendor: <span className="font-medium">{product.vendor}</span>
+						</p>
+					)}
 
-            {product.tags && product.tags.length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-800">Tags:</h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.tags.map((tag, index) => (
-                    <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+					<div className="mt-6">
+						<h2 className="sr-only">Product information</h2>
+						<div className="flex items-center">
+							<p className="font-bold text-gray-900 text-3xl tracking-tight">
+								${price.toFixed(2)}
+							</p>
+							{comparePrice && comparePrice > price && (
+								<span className="ml-2 text-gray-500 text-sm line-through">
+									${comparePrice.toFixed(2)}
+								</span>
+							)}
+						</div>
 
-            {product.variants && product.variants.length > 0 && (
-              <div className="mb-4">
-                <h3 className="font-semibold text-gray-800">Variants:</h3>
-                <ul className="list-disc list-inside text-gray-700">
-                  {product.variants.map((variant) => (
-                    <li key={variant.id}>
-                      {variant.title} - ${parseFloat(variant.price).toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+						{tags.length > 0 && (
+							<div className="flex flex-wrap gap-2 mt-2">
+								{tags.map((tag) => (
+									<span
+										key={tag}
+										className="bg-blue-100 px-2.5 py-0.5 rounded-full font-medium text-blue-800 text-xs"
+									>
+										{tag}
+									</span>
+								))}
+							</div>
+						)}
+					</div>
+
+					{hasVariants && options.length > 0 && (
+						<div className="mt-6">
+							<h3 className="font-medium text-gray-900 text-sm">Options</h3>
+							<div className="space-y-2 mt-2">
+								{options.map((option: Option) => (
+									<div key={option.id}>
+										<label
+											htmlFor={`option-${option.id}`}
+											className="block font-medium text-gray-700 text-sm"
+										>
+											{option.name}
+										</label>
+										<select
+											id={`option-${option.id}`}
+											className="block mt-1 py-2 pr-10 pl-3 border-gray-300 focus:border-indigo-500 rounded-md focus:outline-none focus:ring-indigo-500 w-full sm:text-sm text-base"
+											defaultValue={option.values[0]}
+											aria-label={`Select ${option.name}`}
+										>
+											{option.values.map((value) => (
+												<option key={value} value={value}>
+													{value}
+												</option>
+											))}
+										</select>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div className="mt-6">
+						<h3 className="sr-only">Description</h3>
+						<div
+							className="max-w-none text-gray-500 prose prose-sm"
+							dangerouslySetInnerHTML={{ __html: description }}
+						/>
+					</div>
+
+					<div className="flex space-x-4 mt-10">
+						<Button className="flex-1 py-6 text-base">Add to cart</Button>
+						<Button variant="outline" className="flex-1 py-6 text-base">
+							Buy now
+						</Button>
+					</div>
+
+					{tags.length > 0 && (
+						<div className="mt-8 pt-8 border-gray-200 border-t">
+							<h3 className="font-medium text-gray-900 text-sm">Tags</h3>
+							<div className="flex flex-wrap gap-2 mt-2">
+								{tags.map((tag) => (
+									<Link
+										key={tag}
+										href={`/search?q=${encodeURIComponent(tag)}`}
+										className="inline-flex items-center bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full font-medium text-gray-600 text-xs"
+									>
+										{tag}
+									</Link>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 }

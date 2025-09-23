@@ -5,19 +5,8 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-
 import Link from "next/link";
-
-interface Product {
-  handle: string;
-  title: string;
-  featured_image_url?: string;
-  vendor: string;
-  price?: number;
-}
-
-const PRODUCT_API_BASE_URL =
-  process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:3000";
+import { moritotabi, type Product } from "@/lib/moritotabi";
 
 function ProductsContent() {
   const router = useRouter();
@@ -32,25 +21,27 @@ function ProductsContent() {
   useEffect(() => {
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
     setPage(currentPage);
+    const search = searchParams.get("search") || undefined;
+    const vendor = searchParams.get("vendor") || undefined;
 
     async function fetchProducts() {
       try {
         setLoading(true);
-        const res = await fetch(
-          `${PRODUCT_API_BASE_URL}/api/products?page=${currentPage}&limit=${limit}`,
-        );
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const data = await res.json();
-        setProducts(data.products);
-        setTotal(data.total);
+        const { data, total } = await moritotabi.getProducts({
+          page: currentPage,
+          limit,
+          search,
+          vendor,
+        });
+        setProducts(data);
+        setTotal(total);
       } catch (e: any) {
         setError(e.message);
       } finally {
         setLoading(false);
       }
     }
+
     fetchProducts();
   }, [searchParams]);
 
@@ -75,29 +66,36 @@ function ProductsContent() {
       <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mx-auto max-w-7xl">
         {products.map((product) => (
           <Link href={`/products/${product.handle}`} key={product.handle}>
-            <div className="bg-white shadow-md rounded-lg overflow-hidden hover:scale-105 transition-transform duration-200 cursor-pointer transform">
-              <div className="relative flex justify-center items-center bg-gray-200 w-full h-48">
-                {product.featured_image_url ? (
+            <div key={product.id} className="group relative">
+              <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
+                {product.images?.[0]?.src ? (
                   <Image
-                    src={product.featured_image_url}
-                    alt={product.title}
-                    layout="fill"
-                    objectFit="cover"
+                    src={product.images[0].src}
+                    alt={product.images[0].alt || product.title}
+                    width={300}
+                    height={400}
+                    className="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                    priority
                   />
                 ) : (
-                  <span className="text-gray-500 text-sm">No Image</span>
+                  <div className="flex h-full items-center justify-center bg-gray-100">
+                    <span className="text-gray-400">No image</span>
+                  </div>
                 )}
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg truncate">
-                  {product.title}
-                </h3>
-                <p className="text-gray-600 text-sm">{product.vendor}</p>
-                {product.price && (
-                  <p className="mt-2 font-bold text-gray-800 text-md">
-                    ${product.price.toFixed(2)}
-                  </p>
-                )}
+              <div className="mt-4 flex justify-between">
+                <div>
+                  <h3 className="text-sm text-gray-700">
+                    <Link href={`/products/${product.handle}`}>
+                      <span aria-hidden="true" className="absolute inset-0" />
+                      {product.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">{product.vendor}</p>
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {product.price ? `$${product.price.toFixed(2)}` : 'Price not available'}
+                </p>
               </div>
             </div>
           </Link>

@@ -1,78 +1,129 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useState } from "react";
-import ProductCard from "@/components/bloc/ProductCard";
 import { Button } from "@/components/ui/button";
-import type { Product } from "@/types/shopify";
-import type { StorePagination } from "@/types/store";
+import { moritotabi, type Product } from "@/lib/moritotabi";
+import Image from "next/image";
+import Link from "next/link";
 
-const CollectionsPage: React.FC = () => {
-	const [products, setProducts] = useState<Product[]>([]);
-	const [pagination, setPagination] = useState<StorePagination | null>(null);
-	const [currentPage, setCurrentPage] = useState(1);
-	const itemsPerPage = 6;
+interface Collection {
+	id: string | number;
+	title: string;
+	handle: string;
+	description?: string;
+	image?: {
+		src: string;
+		alt?: string;
+	};
+	productsCount?: number;
+}
+
+export default function CollectionsPage() {
+	const [collections, setCollections] = useState<Collection[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		const fetchProducts = async () => {
+		const fetchCollections = async () => {
 			try {
-				const response = await fetch(
-					`/api/products?page=${currentPage}&limit=${itemsPerPage}`,
+				setLoading(true);
+				// Note: The Moritotabi API might not have a direct collections endpoint
+				// So we'll fetch products and group them by vendor as an example
+				const { data: products } = await moritotabi.getProducts({ limit: 100 });
+
+				// Group products by vendor to create collections
+				const vendors = new Map<string, Collection>();
+
+				products.forEach((product) => {
+					if (product.vendor) {
+						if (!vendors.has(product.vendor)) {
+							vendors.set(product.vendor, {
+								id: product.vendor.toLowerCase().replace(/\s+/g, "-"),
+								title: product.vendor,
+								handle: product.vendor.toLowerCase().replace(/\s+/g, "-"),
+								productsCount: 1,
+								image: product.images?.[0],
+							});
+						} else {
+							const vendor = vendors.get(product.vendor)!;
+							vendor.productsCount = (vendor.productsCount || 0) + 1;
+						}
+					}
+				});
+
+				setCollections(Array.from(vendors.values()));
+			} catch (err) {
+				setError(
+					err instanceof Error ? err.message : "Failed to fetch collections",
 				);
-				if (!response.ok) {
-					throw new Error("Failed to fetch products");
-				}
-				const data = await response.json();
-				setProducts(data.products);
-				setPagination(data.pagination);
-			} catch (error) {
-				console.error("Error fetching products:", error);
+				console.error("Error fetching collections:", err);
+			} finally {
+				setLoading(false);
 			}
 		};
 
-		fetchProducts();
-	}, [currentPage]);
+		fetchCollections();
+	}, []);
 
-	const handlePreviousPage = () => {
-		if (pagination && currentPage > 1) {
-			setCurrentPage(currentPage - 1);
-		}
-	};
-
-	const handleNextPage = () => {
-		if (pagination && currentPage < pagination.totalPages) {
-			setCurrentPage(currentPage + 1);
-		}
-	};
+	if (loading)
+		return (
+			<div className="flex justify-center items-center min-h-screen">
+				Loading collections...
+			</div>
+		);
+	if (error)
+		return (
+			<div className="flex justify-center items-center min-h-screen">
+				Error: {error}
+			</div>
+		);
 
 	return (
-		<div className="mx-auto px-4 py-8 container">
-			<h1 className="mb-8 font-bold text-primary text-3xl">All Products</h1>
+		<div className="mx-auto px-4 py-8 max-w-7xl container">
+			<h1 className="mb-8 font-bold text-gray-900 text-3xl">Collections</h1>
 
-			<div className="gap-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-				{products.map((product) => (
-					<ProductCard key={product.id} product={product} />
+			<div className="gap-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+				{collections.map((collection) => (
+					<Link
+						key={collection.id}
+						href={`/collections/${collection.handle}`}
+						className="group block relative bg-white shadow-md hover:shadow-lg rounded-lg overflow-hidden transition-shadow"
+					>
+						<div className="relative w-full h-64 aspect-h-1 aspect-w-1 overflow-hidden">
+							{collection.image?.src ? (
+								<Image
+									src={collection.image.src}
+									alt={collection.image.alt || collection.title}
+									fill
+									className="object-cover group-hover:scale-105 transition-transform duration-300"
+								/>
+							) : (
+								<div className="flex justify-center items-center bg-gray-100 h-full">
+									<span className="text-gray-400">No image</span>
+								</div>
+							)}
+							<div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-opacity" />
+						</div>
+						<div className="p-4">
+							<h2 className="font-semibold text-gray-900 text-lg">
+								{collection.title}
+							</h2>
+							{collection.productsCount !== undefined && (
+								<p className="mt-1 text-gray-600 text-sm">
+									{collection.productsCount}{" "}
+									{collection.productsCount === 1 ? "product" : "products"}
+								</p>
+							)}
+						</div>
+					</Link>
 				))}
 			</div>
 
-			{pagination && (
-				<div className="flex justify-center items-center space-x-4 mt-8">
-					<Button onClick={handlePreviousPage} disabled={currentPage === 1}>
-						Previous
-					</Button>
-					<span className="text-gray-700">
-						Page {currentPage} of {pagination.totalPages}
-					</span>
-					<Button
-						onClick={handleNextPage}
-						disabled={currentPage === pagination.totalPages}
-					>
-						Next
-					</Button>
+			{collections.length === 0 && !loading && (
+				<div className="py-12 text-center">
+					<p className="text-gray-500">No collections found.</p>
 				</div>
 			)}
 		</div>
 	);
-};
-
-export default CollectionsPage;
+}
