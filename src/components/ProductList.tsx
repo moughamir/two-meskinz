@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { moritotabi, type Product } from "@/lib/moritotabi";
+import { moritotabi } from "@/lib/moritotabi";
+import type { Product } from "@/types/shopify";
+import { ProductCard } from "./ProductCard";
 
 export default function ProductList() {
 	const [products, setProducts] = useState<Product[]>([]);
@@ -11,9 +13,21 @@ export default function ProductList() {
 	useEffect(() => {
 		const fetchProducts = async () => {
 			try {
-				const { data } = await moritotabi.getProducts({ limit: 16 });
-				setProducts(data);
+				setLoading(true);
+				const response = await moritotabi.getProducts({ limit: 16 });
+				// console.log("API Response:", response); // Debug log
+
+				// Check if response.data exists and is an array
+				const productsData = Array.isArray(response?.data)
+					? response.data
+					: Array.isArray(response)
+						? response
+						: [];
+
+				// console.log("Products data:", productsData); // Debug log
+				setProducts(productsData);
 			} catch (err) {
+				// console.error("Error fetching products:", err); // Debug log
 				setError(
 					err instanceof Error ? err.message : "Failed to fetch products",
 				);
@@ -28,16 +42,14 @@ export default function ProductList() {
 	if (loading) return <div>Loading products...</div>;
 	if (error) return <div>Error: {error}</div>;
 
+	if (!products || products.length === 0) {
+		return <div>No products found</div>;
+	}
+
 	return (
 		<div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 			{products.map((product) => (
-				<div key={product.id} className="p-4 border rounded-lg">
-					<h3 className="font-semibold text-xl">{product.title}</h3>
-					{product.vendor && <p className="text-gray-600">{product.vendor}</p>}
-					{product.price && (
-						<p className="mt-2 font-bold text-lg">${product.price}</p>
-					)}
-				</div>
+				<ProductCard key={product.id} product={product} />
 			))}
 		</div>
 	);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { moritotabi, type Product } from "@/lib/moritotabi";
+import { moritotabi } from "@/lib/moritotabi";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -45,6 +45,7 @@ export default function CollectionsPage() {
 								image: product.images?.[0],
 							});
 						} else {
+							// biome-ignore lint/style/noNonNullAssertion: <explanation>
 							const vendor = vendors.get(product.vendor)!;
 							vendor.productsCount = (vendor.productsCount || 0) + 1;
 						}

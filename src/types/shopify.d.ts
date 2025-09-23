@@ -5,6 +5,7 @@ export interface ProductsCollection {
 export interface Product {
   id: number;
   title: string;
+  name: string;
   handle: string;
   body_html: string;
   published_at: string;

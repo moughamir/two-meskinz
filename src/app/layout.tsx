@@ -4,6 +4,9 @@ import "./globals.css";
 import AnnouncementBar from "@/components/bloc/AnnouncementBar";
 import Footer from "@/components/bloc/Footer";
 import Header from "@/components/bloc/Header";
+import { CartProvider } from "@/contexts/CartContext";
+import { Navbar } from "@/components/Navbar";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -30,10 +33,16 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<AnnouncementBar />
-				<Header />
-				{children}
-				<Footer />
+				<Providers>
+					<CartProvider>
+						{/* <AnnouncementBar />
+					<Header /> */}
+						<Navbar />
+
+						<main className="min-h-screen">{children}</main>
+						{/* <Footer /> */}
+					</CartProvider>
+				</Providers>
 			</body>
 		</html>
 	);
