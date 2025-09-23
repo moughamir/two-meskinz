@@ -3,9 +3,52 @@
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://two-meskinz.vercel.app" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS, POST, PUT, DELETE" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://two-meskinz.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS, POST, PUT, DELETE"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://two-meskinz-api.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS, POST, PUT, DELETE"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://moritotabi.com"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS, POST, PUT, DELETE"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
       ]
     }
   ]
