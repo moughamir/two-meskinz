@@ -5,7 +5,7 @@ import AnnouncementBar from "@/components/bloc/AnnouncementBar";
 import Footer from "@/components/bloc/Footer";
 import Header from "@/components/bloc/Header";
 import { CartProvider } from "@/contexts/CartContext";
-import { Navbar } from "@/components/Navbar";
+
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -35,12 +35,10 @@ export default function RootLayout({
 			>
 				<Providers>
 					<CartProvider>
-						{/* <AnnouncementBar />
-					<Header /> */}
-						<Navbar />
-
+						<AnnouncementBar />
+						<Header />
 						<main className="min-h-screen">{children}</main>
-						{/* <Footer /> */}
+						<Footer />
 					</CartProvider>
 				</Providers>
 			</body>

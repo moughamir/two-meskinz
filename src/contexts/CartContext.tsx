@@ -1,12 +1,11 @@
 // src/contexts/CartContext.tsx
 "use client";
 
-import type { ProductVariant } from "@/types/shopify";
+import type { ProductVariant } from "@/lib/types";
 import { createContext, useContext, useState } from "react";
 
-type CartItem = {
-	id: string | number;
-	title: string;
+	type CartItem = {
+	id: string | number;	title: string;
 	price: number | string;
 	image: string;
 	quantity: number;

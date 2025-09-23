@@ -14,20 +14,19 @@ export default function ProductList() {
 		const fetchProducts = async () => {
 			try {
 				setLoading(true);
-				const response = await moritotabi.getProducts({ limit: 16 });
-				// console.log("API Response:", response); // Debug log
+				const response = await moritotabi.getProducts({
+					limit: 16,
+					fields: "id,title,handle,images,variants",
+				});
 
-				// Check if response.data exists and is an array
 				const productsData = Array.isArray(response?.data)
 					? response.data
 					: Array.isArray(response)
 						? response
 						: [];
 
-				// console.log("Products data:", productsData); // Debug log
 				setProducts(productsData);
 			} catch (err) {
-				// console.error("Error fetching products:", err); // Debug log
 				setError(
 					err instanceof Error ? err.message : "Failed to fetch products",
 				);

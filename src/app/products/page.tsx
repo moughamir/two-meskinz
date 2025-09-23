@@ -33,6 +33,7 @@ function ProductsContent() {
 					limit,
 					search,
 					vendor,
+					fields: 'id,title,handle,images,variants,vendor',
 				});
 				setProducts(data);
 				setTotal(total);
@@ -93,7 +94,7 @@ function ProductsContent() {
 								</div>
 								<p className="font-medium text-gray-900 text-sm">
 									{product.variants[0].price
-										? `$${parseInt(product.variants[0].price, 10).toFixed(2)}`
+										? `${parseInt(product.variants[0].price, 10).toFixed(2)}`
 										: "Price not available"}
 								</p>
 							</div>

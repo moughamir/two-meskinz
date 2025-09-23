@@ -24,7 +24,6 @@ class MoritotabiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
-    console.log(`Initialized MoritotabiClient with base URL: ${this.baseUrl}`);
   }
 
   private async fetchJson<T>(
@@ -32,7 +31,6 @@ class MoritotabiClient {
     options?: RequestInit
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    console.log(`Fetching from: ${url}`); // Debug log
 
     try {
       const response = await fetch(url, {
@@ -43,15 +41,12 @@ class MoritotabiClient {
         },
       });
 
-      console.log(`Response status: ${response.status} ${response.statusText}`); // Debug log
-
       if (!response.ok) {
         let errorData: unknown;
         try {
           errorData = await response.json();
-          console.error("Error response data:", errorData); // Debug log
         } catch (e) {
-          console.error("Could not parse error response as JSON");
+          console.error(e);
         }
 
         throw new Error(
@@ -61,10 +56,9 @@ class MoritotabiClient {
       }
 
       const data = await response.json();
-      console.log("Response data:", data); // Debug log
       return data;
     } catch (error) {
-      console.error("Fetch error:", error); // Debug log
+      console.error(error);
       throw error;
     }
   }
@@ -73,8 +67,6 @@ class MoritotabiClient {
     params?: GetProductsParams
   ): Promise<PaginatedResponse<Product>> {
     try {
-      console.log("getProducts called with params:", params); // Debug log
-
       const query = new URLSearchParams();
 
       if (params) {
@@ -86,7 +78,6 @@ class MoritotabiClient {
       }
 
       const endpoint = `/products?${query.toString()}`;
-      console.log("Sending request to endpoint:", endpoint); // Debug log
 
       const response = await this.fetchJson<PaginatedResponse<Product>>(
         endpoint
@@ -98,7 +89,6 @@ class MoritotabiClient {
         "products" in response &&
         Array.isArray(response.products)
       ) {
-        console.log("Found products in response.products"); // Debug log
         return {
           data: response.products,
           total: response.products.length,
@@ -111,10 +101,8 @@ class MoritotabiClient {
         "data" in response &&
         Array.isArray(response.data)
       ) {
-        console.log("Found products in response.data"); // Debug log
         return response as PaginatedResponse<Product>;
       } else if (Array.isArray(response)) {
-        console.log("Response is an array of products"); // Debug log
         return {
           data: response,
           total: response.length,
@@ -123,33 +111,30 @@ class MoritotabiClient {
           total_pages: 1,
         };
       } else {
-        console.error("Unexpected response format:", response); // Debug log
         throw new Error("Unexpected response format from API");
       }
     } catch (error) {
-      console.error("Error in getProducts:", error); // Debug log
+      console.error(error);
       throw error;
     }
   }
 
   async getProductById(id: string | number): Promise<Product> {
     try {
-      console.log(`Fetching product with ID: ${id}`); // Debug log
       return await this.fetchJson<Product>(`/products/${id}`);
     } catch (error) {
-      console.error(`Error fetching product ${id}:`, error); // Debug log
+      console.error(`Error fetching product ${id}:`, error);
       throw error;
     }
   }
 
   async getProductByHandle(handle: string): Promise<Product> {
     try {
-      console.log(`Fetching product with handle: ${handle}`); // Debug log
       return await this.fetchJson<Product>(
         `/products/handle/${encodeURIComponent(handle)}`
       );
     } catch (error) {
-      console.error(`Error fetching product ${handle}:`, error); // Debug log
+      console.error(`Error fetching product ${handle}:`, error);
       throw error;
     }
   }

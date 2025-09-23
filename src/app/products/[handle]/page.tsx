@@ -1,179 +1,114 @@
-// src/app/products/[handle]/page.tsx
-/** biome-ignore-all lint/security/noDangerouslySetInnerHtml: <explanation> */
-"use client";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import type { Metadata } from "next";
+import Grid from "@/components/common/Grid";
+import Footer from "@/components/bloc/Footer";
+import { ProductDescription } from "@/components/products/ProductDescription";
+import { Gallery } from "@/components/products/Gallery";
+import { HIDDEN_PRODUCT_TAG } from "@/lib/config";
+import moritotabi from "@/lib/moritotabi";
+import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { moritotabi } from "@/lib/moritotabi";
-import { useCart } from "@/contexts/CartContext";
-import type { Product, ProductOption, ProductVariant } from "@/types/shopify";
 
-export default function ProductDetailPage() {
-	const { addToCart } = useCart();
-	const router = useRouter();
-	const params = useParams();
-	const handle = params.handle as string;
 
-	const [product, setProduct] = useState<Product | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [quantity, setQuantity] = useState(1);
-	const [selectedVariant, setSelectedVariant] = useState<
-		Product["variants"][number] | null
-	>(null);
+import type { Product, ProductImage as ProductImageType } from "@/lib/types";
 
-	useEffect(() => {
-		async function fetchProduct() {
-			try {
-				setLoading(true);
-				const productData = await moritotabi.getProductByHandle(handle);
-				setProduct(productData);
-				if (productData.variants?.[0]) {
-					setSelectedVariant(productData.variants[0]);
-				}
-			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to load product");
-			} finally {
-				setLoading(false);
-			}
-		}
+async function RelatedProducts({ product }: { product: any }) {
+  const { data: relatedProducts } = await moritotabi.getProducts({
+    vendor: product.vendor,
+  });
 
-		if (handle) {
-			fetchProduct();
-		}
-	}, [handle]);
+  const filteredProducts = relatedProducts.filter(
+    (p: any) => p.handle !== product.handle
+  );
 
-	const handleAddToCart = () => {
-		if (!product || !selectedVariant) return;
+  if (!filteredProducts.length) return null;
 
-		addToCart({
-			id: selectedVariant.id,
-			title: product.title,
-			price: selectedVariant.price || "0",
-			image: selectedVariant.featured_image?.src || product.images?.[0]?.src || "",
-			variant: selectedVariant,
-		});
+  return (
+    <div className="py-8">
+      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
+      <Grid className="grid-cols-2 lg:grid-cols-5">
+        {filteredProducts.map((product: any) => (
+          <Grid.Item key={product.handle} className="animate-fadeIn">
+            <Link
+              className="relative h-full w-full"
+              href={`/product/${product.handle}`}
+            >
+              <Image
+                alt={product.title}
+                src={(product.images[0] as any)?.src}
+                fill
+                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 50vw, 100vw"
+                className="relative w-full h-full"
+              />
+            </Link>
+          </Grid.Item>
+        ))}
+      </Grid>
+    </div>
+  );
+}
+
+async function ProductPage({
+	params,
+}: {
+	params: { handle: string };
+}) {
+	const product: any = await moritotabi.getProductByHandle(params.handle);
+
+	if (!product) return notFound();
+
+	const productJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Product",
+		name: product.title,
+		description: product.description,
+		image: (product.images[0] as any)?.src || "",
+		offers: {
+			"@type": "AggregateOffer",
+			availability: product.availableForSale
+				? "https://schema.org/InStock"
+				: "https://schema.org/OutOfStock",
+			priceCurrency: product.priceRange.minVariantPrice.currencyCode,
+			highPrice: product.priceRange.maxVariantPrice.amount,
+			lowPrice: product.priceRange.minVariantPrice.amount,
+		},
 	};
-
-	const handleBuyNow = () => {
-		handleAddToCart();
-		router.push("/cart");
-	};
-
-	if (loading) return <div>Loading...</div>;
-	if (error) return <div>Error: {error}</div>;
-	if (!product) return <div>Product not found</div>;
-
-	const mainImage = product.images?.[0]?.src;
-	const hasVariants = product.variants && product.variants.length > 0;
-	const price = selectedVariant?.price ?? "0";
 
 	return (
-		<div className="mx-auto px-4 py-8 container">
-			<Button variant="outline" onClick={() => router.back()} className="mb-6">
-				← Back to products
-			</Button>
-
-			<div className="lg:gap-8 lg:grid lg:grid-cols-2">
-				{/* Product Images */}
-				<div className="space-y-4">
-					<div className="bg-gray-100 rounded-lg aspect-square overflow-hidden">
-						{mainImage ? (
-							<Image
-								src={mainImage}
-								alt={product.title}
-								width={800}
-								height={800}
-								className="w-full h-full object-cover"
-								priority
-							/>
-						) : (
-							<div className="flex justify-center items-center bg-gray-100 w-full h-full">
-								<span className="text-gray-400">No image available</span>
-							</div>
-						)}
-					</div>
-				</div>
-
-				{/* Product Info */}
-				<div className="mt-6 lg:mt-0">
-					<h1 className="font-bold text-3xl">{product.title}</h1>
-
-					<div className="mt-4">
-						<span className="font-bold text-2xl">${price}</span>
-					</div>
-
-					{hasVariants && (
-						<div className="space-y-4 mt-6">
-							{product.options?.map((option: ProductOption) => (
-								<div key={option.name}>
-									<label
-										htmlFor={`option-${option.name}`} // Add htmlFor with unique ID
-										className="block mb-1 font-medium text-sm"
-									>
-										{option.name}
-									</label>
-									<select
-										id={`option-${option.name}`} // Add matching ID
-										className="p-2 border rounded w-full"
-										onChange={(e) => {
-											const variant = product.variants?.find(
-												(v: ProductVariant) => v.title === e.target.value,
-											);
-											if (variant) setSelectedVariant(variant);
-										}}
-									>
-										{option.values.map((value) => (
-											<option key={value} value={value}>
-												{value}
-											</option>
-										))}
-									</select>
-								</div>
-							))}
-						</div>
-					)}
-
-					<div className="mt-6">
-						<div className="flex items-center space-x-4">
-							<div className="flex items-center border rounded-md overflow-hidden">
-								<Button
-									className="px-3 py-2"
-									onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-								>
-									-
-								</Button>
-								<span className="px-4">{quantity}</span>
-								<Button
-									className="px-3 py-2"
-									onClick={() => setQuantity((q) => q + 1)}
-								>
-									+
-								</Button>
-							</div>
-							<Button className="flex-1" onClick={handleAddToCart}>
-								Add to Cart
-							</Button>
-							<Button
-								variant="outline"
-								className="flex-1"
-								onClick={handleBuyNow}
-							>
-								Buy Now
-							</Button>
-						</div>
-					</div>
-
-					{product.body_html && (
-						<div
-							className="mt-8 prose"
-							dangerouslySetInnerHTML={{ __html: product.body_html }}
+		<>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify(productJsonLd),
+				}}
+			/>
+			<div className="mx-auto px-4 max-w-screen-2xl">
+				<div className="flex lg:flex-row flex-col lg:gap-8 bg-white dark:bg-black p-8 md:p-12 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+					<div className="w-full h-full basis-full lg:basis-4/6">
+						<Gallery
+							images={product.images.map((image: ProductImageType) => ({
+								src: image.src,
+								altText: image.alt,
+							}))}
 						/>
-					)}
+					</div>
+
+					<div className="basis-full lg:basis-2/6">
+						<ProductDescription product={product} />
+					</div>
 				</div>
+				<Suspense>
+					<RelatedProducts product={product} />
+				</Suspense>
 			</div>
-		</div>
+			<Suspense>
+				<Footer />
+			</Suspense>
+		</>
 	);
 }
+
+export default ProductPage;
+

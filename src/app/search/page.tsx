@@ -28,6 +28,7 @@ function SearchContent() {
 					search: searchQuery,
 					page: pageParam,
 					limit: PAGE_SIZE,
+					fields: 'id,title,handle,images,variants',
 				});
 				return {
 					products: response.data,

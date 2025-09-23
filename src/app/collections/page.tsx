@@ -29,7 +29,7 @@ export default function CollectionsPage() {
 				setLoading(true);
 				// Note: The Moritotabi API might not have a direct collections endpoint
 				// So we'll fetch products and group them by vendor as an example
-				const { data: products } = await moritotabi.getProducts({ limit: 100 });
+				const { data: products } = await moritotabi.getProducts({ limit: 100, fields: 'vendor,images' });
 
 				// Group products by vendor to create collections
 				const vendors = new Map<string, Collection>();
@@ -57,7 +57,6 @@ export default function CollectionsPage() {
 				setError(
 					err instanceof Error ? err.message : "Failed to fetch collections",
 				);
-				console.error("Error fetching collections:", err);
 			} finally {
 				setLoading(false);
 			}
