@@ -46,13 +46,14 @@ export default function ProductDetailPage() {
 	}, [handle]);
 
 	const handleAddToCart = () => {
-		if (!product) return;
+		if (!product || !selectedVariant) return;
 
 		addToCart({
-			id: product.id,
+			id: selectedVariant.id,
 			title: product.title,
-			price: product.variants[0].price || 0,
-			image: product.images?.[0]?.src || "",
+			price: selectedVariant.price || "0",
+			image: selectedVariant.featured_image?.src || product.images?.[0]?.src || "",
+			variant: selectedVariant,
 		});
 	};
 
@@ -67,9 +68,7 @@ export default function ProductDetailPage() {
 
 	const mainImage = product.images?.[0]?.src;
 	const hasVariants = product.variants && product.variants.length > 0;
-	const price = hasVariants
-		? product.variants[0].price
-		: product.variants[0].price;
+	const price = selectedVariant?.price ?? "0";
 
 	return (
 		<div className="mx-auto px-4 py-8 container">
