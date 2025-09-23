@@ -7,7 +7,7 @@ export function ProductCard({ product }: { product: Product }) {
 	const price = product.variants[0].price || 0;
 	const comparePrice = product.variants[0].compare_at_price || 0;
 	const hasDiscount = comparePrice > price;
-	console.info("PRODUCT", product?.images?.[0]?.src);
+
 	return (
 		<Link href={`/products/${product.handle}`} className="group">
 			<div className="bg-gray-100 rounded-lg aspect-square overflow-hidden">

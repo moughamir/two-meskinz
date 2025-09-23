@@ -67,7 +67,9 @@ export default function ProductDetailPage() {
 
 	const mainImage = product.images?.[0]?.src;
 	const hasVariants = product.variants && product.variants.length > 0;
-	const price = product?.variants[0]?.price || 0;
+	const price = hasVariants
+		? product.variants[0].price
+		: product.variants[0].price;
 
 	return (
 		<div className="mx-auto px-4 py-8 container">
@@ -100,14 +102,8 @@ export default function ProductDetailPage() {
 				<div className="mt-6 lg:mt-0">
 					<h1 className="font-bold text-3xl">{product.title}</h1>
 
-					{product.vendor && (
-						<p className="mt-2 text-gray-600">Vendor: {product.vendor}</p>
-					)}
-
 					<div className="mt-4">
-						<span className="font-bold text-2xl">
-							${parseInt(price as string, 10).toFixed(2)}
-						</span>
+						<span className="font-bold text-2xl">${price}</span>
 					</div>
 
 					{hasVariants && (
